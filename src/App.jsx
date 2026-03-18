@@ -15,6 +15,7 @@ export default function App() {
   // เพิ่ม age, sex; ccr = กรอกเอง, ccrAuto = คำนวณจาก CG
   const [pt, setPt] = useState({
     name:'', hn:'', an:'', ward:'', right:'',
+    hosp:'รพ.สงฆ์',
     wt:'', ht:'', age:'', sex:'M',
     cr:'', tb:'', ast:'', alt:'',
     ccr:'', ccrAuto: false
@@ -88,7 +89,7 @@ export default function App() {
         <span style={{ fontSize: 20 }}>💊</span>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 15 }}>Chemo Order</div>
-          <div style={{ fontSize: 11, opacity: .8 }}>สาขาโลหิตวิทยา รพ.สงฆ์</div>
+          <div style={{ fontSize: 11, opacity: .8 }}>สาขาโลหิตวิทยา {pt.hosp}</div>
         </div>
         {view === 'order' && (
           <button onClick={() => setView('search')}
@@ -182,6 +183,7 @@ function OrderView({ reg, pt, pc, bsa, ccrCalc, ccrValue, ord, oc, rows, updRow,
       <div className="order-top">
         <div className="card">
           <div className="sec-label">ข้อมูลผู้ป่วย</div>
+          {lb('ชื่อ รพ.')}{inp(pt.hosp, v => pc('hosp', v), 'text', 'รพ.สงฆ์')}
           {lb('ชื่อ-นามสกุล')}{inp(pt.name, v => pc('name',v), 'text', 'ชื่อ นามสกุล')}
           <div className="pt-grid" style={{ marginTop:6 }}>
             <div>{lb('HN')}{inp(pt.hn, v => pc('hn',v))}</div>

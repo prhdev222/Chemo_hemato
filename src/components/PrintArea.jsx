@@ -2,6 +2,7 @@ import { formatDrugLine } from '../utils/dose.js'
 
 export default function PrintArea({ reg, pt, ord, bsa, rows }) {
   const today = new Date().toLocaleDateString('th-TH', { day:'2-digit', month:'2-digit', year:'numeric' })
+  const hosp = pt.hosp || '…………'
 
   return (
     <div className="print-only" style={{ display:'none' }}>
@@ -9,12 +10,17 @@ export default function PrintArea({ reg, pt, ord, bsa, rows }) {
         <tbody>
           <tr>
             <td colSpan={3} style={{ textAlign:'center', fontSize:'13pt', fontWeight:700, padding:'4pt 6pt' }}>
-              ใบสั่งยาผู้ป่วย{reg.type==='OPD'?'นอก':'ใน'}สาขาโลหิตวิทยา
+              💊 Chemo Order
             </td>
           </tr>
           <tr>
             <td colSpan={3} style={{ textAlign:'center', fontSize:'9.5pt', padding:'2pt 6pt' }}>
-              สาขาโลหิตวิทยา ภาควิชาอายุรศาสตร์ | โรงพยาบาลสงฆ์
+              สาขาโลหิตวิทยา {hosp}
+            </td>
+          </tr>
+          <tr>
+            <td colSpan={3} style={{ textAlign:'center', fontSize:'11.5pt', fontWeight:600, padding:'2pt 6pt' }}>
+              ใบสั่งยาผู้ป่วย{reg.type==='OPD'?'นอก':'ใน'}
             </td>
           </tr>
           <tr>
