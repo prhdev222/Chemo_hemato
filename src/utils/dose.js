@@ -3,6 +3,16 @@ export function calcBSA(wt, ht) {
   return +(Math.sqrt(parseFloat(wt) * parseFloat(ht) / 3600)).toFixed(3)
 }
 
+// Cockcroft-Gault: CCr (mL/min) = [(140-age) × wt] / [72 × Cr] × 0.85 (female)
+export function calcCCr(age, wt, cr, sex) {
+  if (!age || !wt || !cr) return ''
+  const a = parseFloat(age), w = parseFloat(wt), c = parseFloat(cr)
+  if (!a || !w || !c || c <= 0) return ''
+  let val = ((140 - a) * w) / (72 * c)
+  if (sex === 'F') val *= 0.85
+  return Math.round(val)
+}
+
 export function calcDose(drug, bsa, wt, ccr) {
   if (!drug.dose || drug.unit === 'fixed') return null
   const b = parseFloat(bsa) || 0
@@ -56,6 +66,7 @@ export function buildCopyText(reg, pt, ord, bsa, rows) {
   t += `ผู้ป่วย : ${pt.name || '—'}\nHN : ${pt.hn || '—'}   AN : ${pt.an || '—'}\n`
   t += `BW : ${pt.wt || '—'} kg   Ht : ${pt.ht || '—'} cm   BSA : ${bsa || '—'} m²\n`
   if (pt.cr || pt.tb) t += `Labs : Cr ${pt.cr || '—'} TB ${pt.tb || '—'} AST ${pt.ast || '—'} ALT ${pt.alt || '—'}\n`
+  if (pt.ccr) t += `CCr : ${pt.ccr} mL/min${pt.ccrAuto ? ' (คำนวณ CG)' : ' (กรอกเอง)'}\n`
   t += `${ln}\nรายการยา\n${ln}\n`
   rows.forEach((row, i) => {
     t += `${i + 1}. ${row.name}${row.dose ? ' ' + row.dose + ' mg' : ''}\n`

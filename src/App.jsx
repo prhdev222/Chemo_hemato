@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchRegimens } from './utils/api.js'
-import { calcBSA, makeDrugRow, buildCopyText } from './utils/dose.js'
+import { calcBSA, calcCCr, makeDrugRow, buildCopyText } from './utils/dose.js'
 import PrintArea from './components/PrintArea.jsx'
 
 export default function App() {
@@ -11,12 +11,26 @@ export default function App() {
   const [selReg, setSelReg] = useState(null)
   const [search, setSearch] = useState('')
   const [catF, setCatF] = useState('ทั้งหมด')
-  const [pt, setPt] = useState({ name:'',hn:'',an:'',ward:'',right:'',wt:'',ht:'',cr:'',tb:'',ast:'',alt:'',ccr:'' })
-  const [ord, setOrd] = useState({ cycle:'1',day1:'',drName:'',drCode:'' })
+
+  // เพิ่ม age, sex; ccr = กรอกเอง, ccrAuto = คำนวณจาก CG
+  const [pt, setPt] = useState({
+    name:'', hn:'', an:'', ward:'', right:'',
+    wt:'', ht:'', age:'', sex:'M',
+    cr:'', tb:'', ast:'', alt:'',
+    ccr:'', ccrAuto: false
+  })
+  const [ord, setOrd] = useState({ cycle:'1', day1:'', drName:'', drCode:'' })
   const [rows, setRows] = useState([])
   const [toast, setToast] = useState(null)
 
   const bsa = useMemo(() => calcBSA(pt.wt, pt.ht), [pt.wt, pt.ht])
+
+  // คำนวณ CCr อัตโนมัติเมื่อกรอก age, wt, cr, sex
+  const ccrCalc = useMemo(() => calcCCr(pt.age, pt.wt, pt.cr, pt.sex), [pt.age, pt.wt, pt.cr, pt.sex])
+
+  // ถ้าไม่ได้กรอก ccr เอง ให้ใช้ค่าที่คำนวณได้
+  const ccrValue = pt.ccr || (ccrCalc ? String(ccrCalc) : '')
+
   const cats = useMemo(() => ['ทั้งหมด', ...new Set(regimens.map(r => r.cat))], [regimens])
   const filtered = useMemo(() => {
     let r = regimens
@@ -39,13 +53,13 @@ export default function App() {
 
   const selectReg = reg => {
     setSelReg(reg)
-    setRows(reg.drugs.map((d, i) => makeDrugRow(d, bsa, pt.wt, pt.ccr, i)))
+    setRows(reg.drugs.map((d, i) => makeDrugRow(d, bsa, pt.wt, ccrValue, i)))
     setView('order')
     window.scrollTo(0, 0)
   }
 
   const recalc = () => {
-    if (selReg) setRows(selReg.drugs.map((d, i) => makeDrugRow(d, bsa, pt.wt, pt.ccr, i)))
+    if (selReg) setRows(selReg.drugs.map((d, i) => makeDrugRow(d, bsa, pt.wt, ccrValue, i)))
   }
 
   const updRow = (key, f, v) => setRows(rs => rs.map(r => r.key === key ? { ...r, [f]: v } : r))
@@ -59,7 +73,8 @@ export default function App() {
   const oc = (k, v) => setOrd(o => ({ ...o, [k]: v }))
 
   const doCopy = () => {
-    const txt = buildCopyText(selReg, pt, ord, bsa, rows.filter(r => r.checked))
+    const ptWithCcr = { ...pt, ccr: ccrValue, ccrAuto: !pt.ccr && !!ccrCalc }
+    const txt = buildCopyText(selReg, ptWithCcr, ord, bsa, rows.filter(r => r.checked))
     navigator.clipboard.writeText(txt)
       .then(() => showToast('✅ คัดลอกแล้ว!'))
       .catch(() => showToast('❌ copy ไม่ได้', '#c62828'))
@@ -95,19 +110,25 @@ export default function App() {
             cats={cats} catF={catF} setCatF={setCatF} onSel={selectReg} />
         )}
         {!loading && view === 'order' && selReg && (
-          <OrderView reg={selReg} pt={pt} pc={pc} bsa={bsa} ord={ord} oc={oc}
+          <OrderView
+            reg={selReg} pt={pt} pc={pc} bsa={bsa}
+            ccrCalc={ccrCalc} ccrValue={ccrValue}
+            ord={ord} oc={oc}
             rows={rows} updRow={updRow} delRow={delRow} addRow={addRow} recalc={recalc}
-            onPrint={() => window.print()} onCopy={doCopy} />
+            onPrint={() => window.print()} onCopy={doCopy}
+          />
         )}
       </div>
 
       {selReg && (
-        <PrintArea reg={selReg} pt={pt} ord={ord} bsa={bsa} rows={rows.filter(r => r.checked)} />
+        <PrintArea reg={selReg} pt={{ ...pt, ccr: ccrValue }} ord={ord} bsa={bsa}
+          rows={rows.filter(r => r.checked)} ccrCalc={ccrCalc} />
       )}
     </div>
   )
 }
 
+// ── Search View ────────────────────────────────
 function SearchView({ regs, search, setSearch, cats, catF, setCatF, onSel }) {
   return (
     <div>
@@ -141,12 +162,15 @@ function SearchView({ regs, search, setSearch, cats, catF, setCatF, onSel }) {
   )
 }
 
-function OrderView({ reg, pt, pc, bsa, ord, oc, rows, updRow, delRow, addRow, recalc, onPrint, onCopy }) {
+// ── Order View ─────────────────────────────────
+function OrderView({ reg, pt, pc, bsa, ccrCalc, ccrValue, ord, oc, rows, updRow, delRow, addRow, recalc, onPrint, onCopy }) {
   const lb = t => <label className="label">{t}</label>
   const inp = (val, fn, type='text', ph='') => (
     <input value={val} onChange={e => fn(e.target.value)} type={type} placeholder={ph}
       inputMode={type==='number'?'decimal':undefined} />
   )
+
+  const ccrManual = !!pt.ccr  // กรอกเองหรือเปล่า
 
   return (
     <div>
@@ -166,23 +190,99 @@ function OrderView({ reg, pt, pc, bsa, ord, oc, rows, updRow, delRow, addRow, re
             <div>{lb('สิทธิ')}{inp(pt.right, v => pc('right',v))}</div>
           </div>
         </div>
+
         <div className="card">
           <div className="sec-label">BW / Labs</div>
+          {/* BW + Ht */}
           <div className="pt-grid">
             <div>{lb('น้ำหนัก (kg)')}{inp(pt.wt, v => pc('wt',v), 'number', '60')}</div>
             <div>{lb('ส่วนสูง (cm)')}{inp(pt.ht, v => pc('ht',v), 'number', '165')}</div>
           </div>
-          <div className="bsa-box">
-            <span style={{ color:'#1565c0', fontSize:13 }}>BSA = </span>
-            <span style={{ color:'#1565c0', fontSize:24, fontWeight:600 }}>{bsa ? `${bsa} m²` : '—'}</span>
+
+          {/* BSA */}
+          <div className="bsa-box" style={{ marginTop:8 }}>
+            <span style={{ color:'#1565c0', fontSize:12 }}>BSA = </span>
+            <span style={{ color:'#1565c0', fontSize:22, fontWeight:600 }}>{bsa ? `${bsa} m²` : '—'}</span>
           </div>
-          <div className="grid-4">
+
+          {/* Age + Sex */}
+          <div className="pt-grid" style={{ marginTop:6 }}>
+            <div>{lb('อายุ (ปี)')}{inp(pt.age, v => pc('age',v), 'number', '50')}</div>
+            <div>
+              {lb('เพศ')}
+              <select value={pt.sex} onChange={e => pc('sex', e.target.value)}>
+                <option value="M">ชาย (M)</option>
+                <option value="F">หญิง (F)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Labs */}
+          <div className="grid-4" style={{ marginTop:6 }}>
             <div>{lb('Cr')}{inp(pt.cr, v => pc('cr',v), 'number')}</div>
             <div>{lb('TB')}{inp(pt.tb, v => pc('tb',v), 'number')}</div>
             <div>{lb('AST')}{inp(pt.ast, v => pc('ast',v), 'number')}</div>
             <div>{lb('ALT')}{inp(pt.alt, v => pc('alt',v), 'number')}</div>
           </div>
-          <div style={{ marginTop:6 }}>{lb('CCr (mL/min)')}{inp(pt.ccr, v => pc('ccr',v), 'number')}</div>
+
+          {/* CCr — auto-calculated or manual */}
+          <div style={{ marginTop:8 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+              <label className="label" style={{ margin:0, flex:1 }}>
+                CCr (mL/min)
+              </label>
+              {ccrCalc && !ccrManual && (
+                <span style={{ fontSize:11, background:'#e8f5e9', color:'#2e7d32', padding:'1px 7px', borderRadius:10 }}>
+                  คำนวณ CG อัตโนมัติ
+                </span>
+              )}
+              {ccrManual && (
+                <span style={{ fontSize:11, background:'#fff3e0', color:'#e65100', padding:'1px 7px', borderRadius:10 }}>
+                  กรอกเอง
+                </span>
+              )}
+            </div>
+
+            {/* แสดงค่าคำนวณ พร้อมช่อง override */}
+            <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+              {/* ค่าที่ใช้จริง (auto หรือ manual) */}
+              <div style={{
+                flex:1, background: ccrManual ? '#fff' : '#e8f5e9',
+                border: `1px solid ${ccrManual ? '#bbb' : '#a5d6a7'}`,
+                borderRadius:8, padding:'8px 10px',
+                fontSize:18, fontWeight:600,
+                color: ccrManual ? '#1a1a1a' : '#2e7d32',
+                textAlign:'center', minWidth:80
+              }}>
+                {ccrValue || '—'}
+                {ccrValue && <span style={{ fontSize:12, fontWeight:400, marginLeft:4 }}>mL/min</span>}
+              </div>
+
+              {/* ช่อง override */}
+              <div style={{ flex:1 }}>
+                <input
+                  value={pt.ccr}
+                  onChange={e => pc('ccr', e.target.value)}
+                  type="number"
+                  placeholder={ccrCalc ? `${ccrCalc} (override)` : 'กรอกเอง'}
+                  inputMode="decimal"
+                />
+                {pt.ccr && (
+                  <button onClick={() => pc('ccr', '')}
+                    style={{ fontSize:11, color:'#e65100', background:'none', border:'none', padding:'2px 0', cursor:'pointer' }}>
+                    ล้าง (ใช้ค่าคำนวณ)
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* สูตรที่ใช้ */}
+            {ccrCalc && (
+              <div style={{ fontSize:11, color:'#888', marginTop:4 }}>
+                Cockcroft-Gault: (140−{pt.age}) × {pt.wt} / (72 × {pt.cr}){pt.sex==='F' ? ' × 0.85' : ''} = {ccrCalc} mL/min
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -224,7 +324,7 @@ function OrderView({ reg, pt, pc, bsa, ord, oc, rows, updRow, delRow, addRow, re
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, i) => <DrugRowDesktop key={row.key} row={row} updRow={updRow} delRow={delRow} />)}
+                {rows.map((row) => <DrugRowDesktop key={row.key} row={row} updRow={updRow} delRow={delRow} />)}
               </tbody>
             </table>
           </div>
@@ -251,6 +351,7 @@ function OrderView({ reg, pt, pc, bsa, ord, oc, rows, updRow, delRow, addRow, re
   )
 }
 
+// ── Drug Row Desktop ───────────────────────────
 function DrugRowDesktop({ row, updRow, delRow }) {
   const ii = (f, ph) => (
     <input className="row-inp" value={row[f]}
@@ -280,6 +381,7 @@ function DrugRowDesktop({ row, updRow, delRow }) {
   )
 }
 
+// ── Drug Row Mobile ────────────────────────────
 function DrugRowMobile({ row, updRow, delRow, i }) {
   const ii = (f, ph, type='text') => (
     <input className="row-inp" value={row[f]} type={type}
@@ -298,36 +400,18 @@ function DrugRowMobile({ row, updRow, delRow, i }) {
         <button onClick={() => delRow(row.key)}
           style={{ background:'none',border:'none',color:'#e53935',fontSize:22,padding:'0 4px',lineHeight:1 }}>×</button>
       </div>
-
       <div style={{ marginBottom:8 }}>
         <label className="label" style={{ marginTop:0 }}>ชื่อยา</label>
         {ii('name','ชื่อยา')}
       </div>
       <div className="drug-card-fields">
-        <div>
-          <label className="label" style={{ marginTop:0 }}>ขนาด (mg)</label>
-          {ii('dose','mg','number')}
-        </div>
-        <div>
-          <label className="label" style={{ marginTop:0 }}>ส่วนผสม</label>
-          {ii('vehicle','NSS 250 mL')}
-        </div>
-        <div>
-          <label className="label" style={{ marginTop:0 }}>{row.isFixed ? 'วิธีใช้' : 'Route'}</label>
-          {row.isFixed ? ii('instruct','วิธีใช้') : ii('rate','IV in 1 hr')}
-        </div>
-        <div>
-          <label className="label" style={{ marginTop:0 }}>วัน</label>
-          {ii('days','Day 1')}
-        </div>
-        <div className="drug-card-full">
-          <label className="label" style={{ marginTop:0 }}>รายละเอียด</label>
-          {ii('detail','rate escalation, คำเตือน...')}
-        </div>
-        <div className="drug-card-full">
-          <label className="label" style={{ marginTop:0 }}>หมายเหตุ</label>
-          {ii('note','NED, ใบกำกับ...')}
-        </div>
+        <div><label className="label" style={{ marginTop:0 }}>ขนาด (mg)</label>{ii('dose','mg','number')}</div>
+        <div><label className="label" style={{ marginTop:0 }}>ส่วนผสม</label>{ii('vehicle','NSS 250 mL')}</div>
+        <div><label className="label" style={{ marginTop:0 }}>{row.isFixed ? 'วิธีใช้' : 'Route'}</label>
+          {row.isFixed ? ii('instruct','วิธีใช้') : ii('rate','IV in 1 hr')}</div>
+        <div><label className="label" style={{ marginTop:0 }}>วัน</label>{ii('days','Day 1')}</div>
+        <div className="drug-card-full"><label className="label" style={{ marginTop:0 }}>รายละเอียด</label>{ii('detail','rate escalation, คำเตือน...')}</div>
+        <div className="drug-card-full"><label className="label" style={{ marginTop:0 }}>หมายเหตุ</label>{ii('note','NED, ใบกำกับ...')}</div>
       </div>
     </div>
   )
