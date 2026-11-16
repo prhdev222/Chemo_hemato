@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb'
 import clientPromise from './_db.js'
 import { SIRIRAJ_2025 } from './_siriraj2025.js'
 import { ORDERS } from './_orders.js'
@@ -257,31 +258,27 @@ export default async function handler(req, res) {
   const client = await clientPromise
   const db = client.db('chemo_order')
 
-  // ล้างของเก่า
-  await db.collection('regimens').deleteMany({})
-  await db.collection('drugs').deleteMany({})
-
-  let count = 0
+  // สร้าง document ทั้งหมดไว้ก่อน แล้วเขียนเป็น bulk เพียง 4 คำสั่ง
+  // (เดิม insert ทีละ regimen = 600+ round-trip ไป Atlas → function timeout)
+  const now = new Date()
+  const regDocs = []
+  const drugDocs = []
   for (const reg of [...BUILTIN, ...SIRIRAJ_2025, ...ORDERS]) {
     const { drugs, ...regData } = reg
-    regData.is_active = true
-    regData.created_at = new Date()
-    regData.updated_at = new Date()
-
-    const result = await db.collection('regimens').insertOne(regData)
-    const regimenId = result.insertedId.toString()
-
-    if (drugs?.length > 0) {
-      const drugDocs = drugs.map((d, i) => ({
-        ...d,
-        regimen_id: regimenId,
-        sort_order: i,
-        created_at: new Date()
-      }))
-      await db.collection('drugs').insertMany(drugDocs)
+    const _id = new ObjectId()
+    regDocs.push({ _id, ...regData, is_active: true, created_at: now, updated_at: now })
+    for (const [i, d] of (drugs || []).entries()) {
+      drugDocs.push({ ...d, regimen_id: _id.toString(), sort_order: i, created_at: now })
     }
-    count++
   }
+  const newIds = regDocs.map(r => r._id)
+  const newIdStrs = newIds.map(id => id.toString())
 
-  res.status(200).json({ ok: true, seeded: count })
+  // ใส่ของใหม่ก่อน แล้วค่อยลบของเก่า เพื่อไม่ให้ DB ว่างถ้า insert ล้มเหลว
+  await db.collection('regimens').insertMany(regDocs, { ordered: false })
+  await db.collection('drugs').insertMany(drugDocs, { ordered: false })
+  await db.collection('regimens').deleteMany({ _id: { $nin: newIds } })
+  await db.collection('drugs').deleteMany({ regimen_id: { $nin: newIdStrs } })
+
+  res.status(200).json({ ok: true, seeded: regDocs.length, drugs: drugDocs.length })
 }
