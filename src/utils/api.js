@@ -12,7 +12,7 @@ export async function createRegimen(data, adminKey) {
     headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
     body: JSON.stringify(data)
   })
-  if (!res.ok) throw new Error('สร้างสูตรไม่ได้')
+  if (!res.ok) throw httpError(res, 'สร้างสูตรไม่ได้')
   return res.json()
 }
 
@@ -22,7 +22,7 @@ export async function updateRegimen(id, data, adminKey) {
     headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
     body: JSON.stringify(data)
   })
-  if (!res.ok) throw new Error('แก้ไขสูตรไม่ได้')
+  if (!res.ok) throw httpError(res, 'แก้ไขสูตรไม่ได้')
   return res.json()
 }
 
@@ -31,7 +31,7 @@ export async function deleteRegimen(id, adminKey) {
     method: 'DELETE',
     headers: { 'x-admin-key': adminKey }
   })
-  if (!res.ok) throw new Error('ลบสูตรไม่ได้')
+  if (!res.ok) throw httpError(res, 'ลบสูตรไม่ได้')
   return res.json()
 }
 
@@ -40,6 +40,12 @@ export async function seedRegimens(adminKey) {
     method: 'POST',
     headers: { 'x-admin-key': adminKey }
   })
-  if (!res.ok) throw new Error('seed ไม่ได้')
+  if (!res.ok) throw httpError(res, 'seed ไม่ได้')
   return res.json()
+}
+
+function httpError(res, what) {
+  if (res.status === 401) return new Error('รหัส admin ไม่ถูกต้อง (401)')
+  if (res.status === 504) return new Error(what + ' — server timeout (504)')
+  return new Error(`${what} (HTTP ${res.status})`)
 }

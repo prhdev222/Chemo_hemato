@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
 import clientPromise from './_db.js'
+import { isAdmin } from './_auth.js'
 import { SIRIRAJ_2025 } from './_siriraj2025.js'
 import { ORDERS } from './_orders.js'
 
@@ -249,7 +250,7 @@ const BUILTIN = [
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
 
-  if (req.headers['x-admin-key'] !== process.env.ADMIN_PASSWORD)
+  if (!isAdmin(req))
     return res.status(401).json({ error: 'Unauthorized' })
 
   if (req.method !== 'POST')
