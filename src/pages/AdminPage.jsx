@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchRegimens, createRegimen, updateRegimen, deleteRegimen, seedRegimens } from '../utils/api.js'
 
-const UNITS = ['fixed','mg/m2','mg/kg','mg/m2/day','IU/m2','AUC5']
-const CATS = ['AML','ALL','APL','MDS/AML','Lymphoma','Myeloma','CLL','อื่นๆ']
+const UNITS = ['fixed','mg/m2','mg/kg','mg/m2/day','mg/kg/day','IU/m2','mcg/m2','AUC5']
+const CATS = ['AML','ALL','APL','MDS/AML','Lymphoma','Hodgkin','CNS lymphoma','Burkitt','NK/T lymphoma','Myeloma','CLL','Aplastic anemia','HLH','อื่นๆ']
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem('adminKey') || '')

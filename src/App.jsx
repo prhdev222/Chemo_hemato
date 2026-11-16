@@ -369,7 +369,7 @@ function DrugRowDesktop({ row, updRow, delRow }) {
         {ii('name','ชื่อยา')}
         {row.doseLabel && <div style={{ fontSize:10, color:'#1565c0', marginTop:2 }}>{row.doseLabel}</div>}
       </td>
-      <td>{ii('dose','mg')}</td>
+      <td>{ii('dose', row.doseUnit || 'mg')}</td>
       <td>{ii('vehicle','NSS 250 mL')}</td>
       <td>{row.isFixed ? ii('instruct','วิธีใช้') : ii('rate','IV in 1 hr')}</td>
       <td>{ii('detail','rate, คำเตือน')}</td>
@@ -407,7 +407,7 @@ function DrugRowMobile({ row, updRow, delRow, i }) {
         {ii('name','ชื่อยา')}
       </div>
       <div className="drug-card-fields">
-        <div><label className="label" style={{ marginTop:0 }}>ขนาด (mg)</label>{ii('dose','mg','number')}</div>
+        <div><label className="label" style={{ marginTop:0 }}>ขนาด ({row.doseUnit || 'mg'})</label>{ii('dose', row.doseUnit || 'mg','number')}</div>
         <div><label className="label" style={{ marginTop:0 }}>ส่วนผสม</label>{ii('vehicle','NSS 250 mL')}</div>
         <div><label className="label" style={{ marginTop:0 }}>{row.isFixed ? 'วิธีใช้' : 'Route'}</label>
           {row.isFixed ? ii('instruct','วิธีใช้') : ii('rate','IV in 1 hr')}</div>
