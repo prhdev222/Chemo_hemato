@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchRegimens } from './utils/api.js'
 import { calcBSA, calcCCr, makeDrugRow, buildCopyText } from './utils/dose.js'
+import { pdfLink, pdfPage } from './utils/pdf.js'
 import PrintArea from './components/PrintArea.jsx'
 
 export default function App() {
@@ -32,13 +33,16 @@ export default function App() {
   // ถ้าไม่ได้กรอก ccr เอง ให้ใช้ค่าที่คำนวณได้
   const ccrValue = pt.ccr || (ccrCalc ? String(ccrCalc) : '')
 
-  const cats = useMemo(() => ['ทั้งหมด', ...new Set(regimens.map(r => r.cat))], [regimens])
+  // 'summary' = สูตรย่อ (CMT summary / built-in), 'order' = ใบสั่งยา hemato ถอดจากแบบฟอร์ม
+  const [groupF, setGroupF] = useState('summary')
+  const inGroup = r => (r.group === 'order') === (groupF === 'order')
+  const cats = useMemo(() => ['ทั้งหมด', ...new Set(regimens.filter(inGroup).map(r => r.cat))], [regimens, groupF])
   const filtered = useMemo(() => {
-    let r = regimens
+    let r = regimens.filter(inGroup)
     if (catF !== 'ทั้งหมด') r = r.filter(x => x.cat === catF)
     if (search.trim()) r = r.filter(x => (x.name + x.abbr).toLowerCase().includes(search.toLowerCase()))
     return r
-  }, [regimens, catF, search])
+  }, [regimens, groupF, catF, search])
 
   useEffect(() => {
     fetchRegimens()
@@ -108,7 +112,8 @@ export default function App() {
         {loading && <div className="loading">⏳ กำลังโหลดสูตรยา...</div>}
         {!loading && view === 'search' && (
           <SearchView regs={filtered} search={search} setSearch={setSearch}
-            cats={cats} catF={catF} setCatF={setCatF} onSel={selectReg} />
+            cats={cats} catF={catF} setCatF={setCatF} onSel={selectReg}
+            groupF={groupF} setGroupF={g => { setGroupF(g); setCatF('ทั้งหมด') }} />
         )}
         {!loading && view === 'order' && selReg && (
           <OrderView
@@ -130,12 +135,19 @@ export default function App() {
 }
 
 // ── Search View ────────────────────────────────
-function SearchView({ regs, search, setSearch, cats, catF, setCatF, onSel }) {
+const GROUPS = [['summary', '📑 สูตรย่อ'], ['order', '📋 ใบสั่งยา hemato']]
+
+function SearchView({ regs, search, setSearch, cats, catF, setCatF, onSel, groupF, setGroupF }) {
   return (
     <div>
       <input value={search} onChange={e => setSearch(e.target.value)}
         placeholder="🔍 ค้นหา เช่น CHOP, Bortezomib, ABVD..."
         style={{ marginBottom: 10, fontSize: 16 }} />
+      <div className="group-row">
+        {GROUPS.map(([g, label]) => (
+          <button key={g} className={`group-btn${groupF===g?' active':''}`} onClick={() => setGroupF(g)}>{label}</button>
+        ))}
+      </div>
       <div className="pill-row" style={{ marginBottom: 14 }}>
         {cats.map(c => (
           <button key={c} className={`pill${catF===c?' active':''}`} onClick={() => setCatF(c)}>{c}</button>
@@ -154,7 +166,7 @@ function SearchView({ regs, search, setSearch, cats, catF, setCatF, onSel }) {
             </div>
             <div style={{ fontSize:12, color:'#555', marginBottom:4 }}>{reg.name}</div>
             <div style={{ fontSize:11, color:'#aaa' }}>
-              {reg.drugs?.length || 0} รายการ{reg.cycleInfo ? ' · ' + reg.cycleInfo : ''}
+              {reg.drugs?.length || 0} รายการ{reg.cycleInfo ? ' · ' + reg.cycleInfo : ''}{pdfPage(reg) ? ' · PDF หน้า ' + pdfPage(reg) : ''}
             </div>
           </div>
         ))}
@@ -177,6 +189,10 @@ function OrderView({ reg, pt, pc, bsa, ccrCalc, ccrValue, ord, oc, rows, updRow,
     <div>
       <div style={{ fontWeight:600, fontSize:15, color:'#1565c0', marginBottom:12, lineHeight:1.3 }}>
         📋 {reg.name}
+        {pdfLink(reg) && (
+          <a href={pdfLink(reg).href} target="_blank" rel="noreferrer" className="pdf-link"
+            title={pdfLink(reg).label}>📄 ดูต้นฉบับ PDF หน้า {pdfLink(reg).page}</a>
+        )}
       </div>
 
       {/* Patient + Labs */}
@@ -369,7 +385,7 @@ function DrugRowDesktop({ row, updRow, delRow }) {
         {ii('name','ชื่อยา')}
         {row.doseLabel && <div style={{ fontSize:10, color:'#1565c0', marginTop:2 }}>{row.doseLabel}</div>}
       </td>
-      <td>{ii('dose','mg')}</td>
+      <td>{ii('dose', row.doseUnit || 'mg')}</td>
       <td>{ii('vehicle','NSS 250 mL')}</td>
       <td>{row.isFixed ? ii('instruct','วิธีใช้') : ii('rate','IV in 1 hr')}</td>
       <td>{ii('detail','rate, คำเตือน')}</td>
@@ -407,7 +423,7 @@ function DrugRowMobile({ row, updRow, delRow, i }) {
         {ii('name','ชื่อยา')}
       </div>
       <div className="drug-card-fields">
-        <div><label className="label" style={{ marginTop:0 }}>ขนาด (mg)</label>{ii('dose','mg','number')}</div>
+        <div><label className="label" style={{ marginTop:0 }}>ขนาด ({row.doseUnit || 'mg'})</label>{ii('dose', row.doseUnit || 'mg','number')}</div>
         <div><label className="label" style={{ marginTop:0 }}>ส่วนผสม</label>{ii('vehicle','NSS 250 mL')}</div>
         <div><label className="label" style={{ marginTop:0 }}>{row.isFixed ? 'วิธีใช้' : 'Route'}</label>
           {row.isFixed ? ii('instruct','วิธีใช้') : ii('rate','IV in 1 hr')}</div>

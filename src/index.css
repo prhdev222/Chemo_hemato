@@ -270,3 +270,16 @@ button:disabled { opacity: .5; cursor: default; }
   table.print-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; border: 1pt solid #000; }
   table.print-table td, table.print-table th { border: .5pt solid #000; padding: 2.5pt 5pt; vertical-align: top; }
 }
+
+/* group switch: สูตรย่อ / ใบสั่งยา hemato */
+.group-row { display:flex; gap:8px; margin-bottom:10px; }
+.group-btn {
+  flex:1; padding:9px 10px; border-radius:10px; border:1.5px solid #cfd8dc;
+  background:#fff; color:#546e7a; font-size:14px; font-weight:600; cursor:pointer;
+}
+.group-btn.active { background:#1565c0; border-color:#1565c0; color:#fff; }
+.pdf-link {
+  display:inline-block; margin-left:10px; padding:3px 9px; border-radius:8px;
+  background:#e3f2fd; color:#1565c0; font-size:12px; font-weight:500; text-decoration:none; white-space:nowrap;
+}
+.pdf-link:hover { background:#bbdefb; }

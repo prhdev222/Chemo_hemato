@@ -17,12 +17,12 @@ export function calcDose(drug, bsa, wt, ccr) {
   if (!drug.dose || drug.unit === 'fixed') return null
   const b = parseFloat(bsa) || 0
   const w = parseFloat(wt) || 0
-  if (['mg/m2', 'IU/m2', 'mg/m2/day'].includes(drug.unit)) {
+  if (['mg/m2', 'IU/m2', 'mg/m2/day', 'mcg/m2'].includes(drug.unit)) {
     let d = drug.dose * b
     if (drug.maxDose) d = Math.min(d, drug.maxDose)
     return Math.round(d * 10) / 10
   }
-  if (drug.unit === 'mg/kg') return Math.round(drug.dose * w * 10) / 10
+  if (['mg/kg', 'mg/kg/day', 'mcg/kg', 'mcg/kg/day'].includes(drug.unit)) return Math.round(drug.dose * w * 10) / 10
   if (drug.unit === 'AUC5') return ccr ? Math.min(5 * (parseFloat(ccr) + 25), 800) : null
   return null
 }
@@ -39,6 +39,7 @@ export function makeDrugRow(drug, bsa, wt, ccr, index) {
     name: drug.name || '',
     doseLabel,
     dose: dv != null ? String(dv) : '',
+    doseUnit: String(drug.unit || '').startsWith('mcg') ? 'mcg' : 'mg',
     vehicle: drug.vehicle || '',
     rate: isFixed ? '' : (drug.route || ''),
     instruct: isFixed ? (drug.instruct || '') : '',
@@ -52,7 +53,7 @@ export function makeDrugRow(drug, bsa, wt, ccr, index) {
 export function formatDrugLine(row) {
   if (row.isFixed) return row.instruct || ''
   let s = ''
-  if (row.dose) s += row.dose + ' mg'
+  if (row.dose) s += row.dose + ' ' + (row.doseUnit || 'mg')
   if (row.vehicle) s += (s ? ' ผสมใน ' : '') + row.vehicle
   if (row.rate) s += (s ? ' ' : '') + row.rate
   return s
@@ -69,7 +70,7 @@ export function buildCopyText(reg, pt, ord, bsa, rows) {
   if (pt.ccr) t += `CCr : ${pt.ccr} mL/min${pt.ccrAuto ? ' (คำนวณ CG)' : ' (กรอกเอง)'}\n`
   t += `${ln}\nรายการยา\n${ln}\n`
   rows.forEach((row, i) => {
-    t += `${i + 1}. ${row.name}${row.dose ? ' ' + row.dose + ' mg' : ''}\n`
+    t += `${i + 1}. ${row.name}${row.dose ? ' ' + row.dose + ' ' + (row.doseUnit || 'mg') : ''}\n`
     const line = formatDrugLine(row)
     if (line) t += `   ${line}\n`
     if (row.detail) t += `   ⚠ ${row.detail}\n`
