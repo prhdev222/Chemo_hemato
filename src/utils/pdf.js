@@ -27,10 +27,16 @@ export function pdfPage(reg) {
   return m ? +m[1] : null
 }
 
-export function pdfLink(reg) {
+export function pdfLocate(reg) {
   const p = pdfPage(reg)
   if (!p) return null
   const s = SECTIONS.find(x => p >= x.from && p <= x.to)
   if (!s) return null
-  return { href: `/protocol/${s.file}#page=${p - s.from + 1}`, label: s.label, page: p }
+  return { file: s.file, label: s.label, page: p, localPage: p - s.from + 1, sectionFrom: s.from, sectionTo: s.to }
+}
+
+export function pdfLink(reg) {
+  const l = pdfLocate(reg)
+  if (!l) return null
+  return { href: `/protocol/${l.file}#page=${l.localPage}`, label: l.label, page: l.page }
 }

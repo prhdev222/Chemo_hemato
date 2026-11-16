@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { fetchRegimens } from './utils/api.js'
 import { calcBSA, calcCCr, makeDrugRow, buildCopyText } from './utils/dose.js'
 import { pdfLink, pdfPage } from './utils/pdf.js'
+import PdfFormModal from './components/PdfFormModal.jsx'
 import PrintArea from './components/PrintArea.jsx'
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
     ccr:'', ccrAuto: false
   })
   const [ord, setOrd] = useState({ cycle:'1', day1:'', drName:'', drCode:'' })
+  const [pdfModal, setPdfModal] = useState(false)
   const [rows, setRows] = useState([])
   const [toast, setToast] = useState(null)
 
@@ -122,7 +124,12 @@ export default function App() {
             ord={ord} oc={oc}
             rows={rows} updRow={updRow} delRow={delRow} addRow={addRow} recalc={recalc}
             onPrint={() => window.print()} onCopy={doCopy}
+            canPdf={!!pdfLink(selReg)} onPrintPdf={() => setPdfModal(true)}
           />
+        )}
+        {pdfModal && selReg && (
+          <PdfFormModal reg={selReg} rows={rows} pt={pt} ord={ord} bsa={bsa} ccr={ccrValue}
+            onClose={() => setPdfModal(false)} />
         )}
       </div>
 
@@ -176,7 +183,7 @@ function SearchView({ regs, search, setSearch, cats, catF, setCatF, onSel, group
 }
 
 // ── Order View ─────────────────────────────────
-function OrderView({ reg, pt, pc, bsa, ccrCalc, ccrValue, ord, oc, rows, updRow, delRow, addRow, recalc, onPrint, onCopy }) {
+function OrderView({ reg, pt, pc, bsa, ccrCalc, ccrValue, ord, oc, rows, updRow, delRow, addRow, recalc, onPrint, onCopy, canPdf, onPrintPdf }) {
   const lb = t => <label className="label">{t}</label>
   const inp = (val, fn, type='text', ph='') => (
     <input value={val} onChange={e => fn(e.target.value)} type={type} placeholder={ph}
@@ -364,6 +371,13 @@ function OrderView({ reg, pt, pc, bsa, ccrCalc, ccrValue, ord, oc, rows, updRow,
           <span style={{ fontSize:11, fontWeight:400, opacity:.85 }}>LINE / HIS</span>
         </button>
         <button className="btn-primary btn-lg" onClick={onPrint}>🖨️ พิมพ์</button>
+        {canPdf && (
+          <button className="btn-primary btn-lg" onClick={onPrintPdf}
+            style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:1, background:'#283593', borderColor:'#283593' }}>
+            <span>📄 พิมพ์ฟอร์มต้นฉบับ</span>
+            <span style={{ fontSize:11, fontWeight:400, opacity:.85 }}>เติมค่าลงฟอร์ม PDF</span>
+          </button>
+        )}
       </div>
     </div>
   )

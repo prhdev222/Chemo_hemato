@@ -14,6 +14,8 @@ export function calcCCr(age, wt, cr, sex) {
 }
 
 export function calcDose(drug, bsa, wt, ccr) {
+  // AUC5 (carboplatin) has no mg/m2 dose; it depends on CrCl only
+  if (drug.unit === 'AUC5') return ccr ? Math.min(5 * (parseFloat(ccr) + 25), 800) : null
   if (!drug.dose || drug.unit === 'fixed') return null
   const b = parseFloat(bsa) || 0
   const w = parseFloat(wt) || 0
