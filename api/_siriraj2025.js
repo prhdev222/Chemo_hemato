@@ -780,4 +780,13 @@ export const SIRIRAJ_2025 = [
     { name:'Teclistamab (step-up dose 2)', dose:0.3, unit:'mg/kg', route:'SC', days:'2–4 วันถัดไป' },
     { name:'Teclistamab (treatment dose)', dose:1.5, unit:'mg/kg', route:'SC', days:'2–4 วันถัดไป แล้ว weekly' },
   ]},
+
+  // ───────────────────────── IVIG (ใบสั่งยาผู้ป่วยใน p.109) ─────────────────────────
+  // แบบฟอร์มเว้นขนาดยาไว้กรอก (…… g/kg/day) จึงใส่เป็น fixed ให้แพทย์กรอกขนาดและจำนวนวันเอง
+  { name:'IVIG (Intravenous immunoglobulin)', abbr:'IVIG', cat:'อื่นๆ', type:'IPD', ref:P(109), drugs:[
+    { name:'IVIG', unit:'fixed', instruct:'…… g/kg/day (…… mL/day) IV — ระบุขนาดตามข้อบ่งชี้; 5% (2.5 g/50 mL, 5 g/100 mL, 10 g/200 mL) หรือ 10% (2.5 g/25 mL, 5 g/50 mL, 10 g/100 mL)', days:'Day ……', note:'5% ผสม UC + SS' },
+    { name:'IVIG rate', unit:'fixed', instruct:'0.5 mL/kg/hr × 30 min → 1 mL/kg/hr × 30 min → 2 mL/kg/hr × 30 min → แล้ว 4 mL/kg/hr', days:'ทุกวันที่ให้' },
+    { name:'Record vital signs', unit:'fixed', instruct:'q 15 min × 2 → q 30 min × 2 → q 1 hr จนครบ 1 hr หลังให้ยาหมด', days:'ทุกวันที่ให้' },
+    { name:'เตรียมยาฉุกเฉิน', unit:'fixed', instruct:'adrenaline 1 amp, chlorpheniramine 10 mg, hydrocortisone 100 mg ไว้ข้างเตียง', days:'ทุกวันที่ให้', detail:'severe allergic reaction → หยุดยาทันที ให้ hydrocortisone IV + chlorpheniramine IV; anaphylaxis → หยุดยาทันที ให้ adrenaline IV' },
+  ]},
 ]

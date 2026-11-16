@@ -1,8 +1,8 @@
 # Siriraj CMT 2025 — ตารางตรวจสอบก่อน seed
 
-ถอดจาก "คู่มือการให้ยาเคมีบำบัด ศิริราช Update 2025" หมวด CMT Summary (หน้า 4–30) ลงใน `api/_siriraj2025.js`
+ถอดจาก "คู่มือการให้ยาเคมีบำบัด ศิริราช Update 2025" หมวด CMT Summary (หน้า 4–30) และ IVIG จากใบสั่งยาผู้ป่วยใน (หน้า 109) ลงใน `api/_siriraj2025.js`
 
-- regimens ใหม่: **138** (drug rows 468)
+- regimens ใหม่: **139** (drug rows 472)
 - ตาราง CMT Summary ไม่มี premedication → ไม่ได้เติมให้ (ต่างจาก seed เดิมที่มี ondansetron/dexa)
 - `type` (IPD/OPD) ไม่อยู่ในตาราง PDF — เป็นการเดาของผู้ถอด ต้องตรวจทุกตัว
 - หน่วยใหม่ที่เพิ่มในแอป: `mcg/m2`, `mg/kg/day`; หมวดใหม่: Hodgkin, CNS lymphoma, Burkitt, NK/T lymphoma, Aplastic anemia, HLH
@@ -843,3 +843,11 @@
 - Teclistamab (step-up dose 1) 0.06 mg/kg SC — D1
 - Teclistamab (step-up dose 2) 0.3 mg/kg SC — 2–4 วันถัดไป
 - Teclistamab (treatment dose) 1.5 mg/kg SC — 2–4 วันถัดไป แล้ว weekly
+
+### อื่นๆ
+
+**IVIG (Intravenous immunoglobulin)** — abbr `IVIG`, IPD — _Siriraj CMT 2025 p.109_
+- IVIG: …… g/kg/day (…… mL/day) IV — ระบุขนาดตามข้อบ่งชี้; 5% (2.5 g/50 mL, 5 g/100 mL, 10 g/200 mL) หรือ 10% (2.5 g/25 mL, 5 g/50 mL, 10 g/100 mL) — Day ……
+- IVIG rate: 0.5 mL/kg/hr × 30 min → 1 mL/kg/hr × 30 min → 2 mL/kg/hr × 30 min → แล้ว 4 mL/kg/hr — ทุกวันที่ให้
+- Record vital signs: q 15 min × 2 → q 30 min × 2 → q 1 hr จนครบ 1 hr หลังให้ยาหมด — ทุกวันที่ให้
+- เตรียมยาฉุกเฉิน: adrenaline 1 amp, chlorpheniramine 10 mg, hydrocortisone 100 mg ไว้ข้างเตียง — ทุกวันที่ให้
