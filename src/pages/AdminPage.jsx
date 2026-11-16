@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchRegimens, createRegimen, updateRegimen, deleteRegimen, seedRegimens } from '../utils/api.js'
 
-const UNITS = ['fixed','mg/m2','mg/kg','mg/m2/day','mg/kg/day','IU/m2','mcg/m2','AUC5']
-const CATS = ['AML','ALL','APL','MDS/AML','Lymphoma','Hodgkin','CNS lymphoma','Burkitt','NK/T lymphoma','Myeloma','CLL','Aplastic anemia','HLH','อื่นๆ']
+const UNITS = ['fixed','mg/m2','mg/kg','mg/m2/day','mg/kg/day','IU/m2','mcg/m2','mcg/kg','mcg/kg/day','AUC5']
+const CATS = ['AML','ALL','APL','MDS/AML','Lymphoma','Hodgkin','CNS lymphoma','Burkitt','NK/T lymphoma','Myeloma','CLL','Aplastic anemia','HLH','HSCT','ผู้ป่วยนอก','อื่นๆ']
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem('adminKey') || '')
@@ -230,6 +230,8 @@ function RegForm({ reg, onSave, onCancel }) {
     cat: reg?.cat || 'Lymphoma',
     type: reg?.type || 'OPD',
     cycleInfo: reg?.cycleInfo || '',
+    group: reg?.group || 'summary',
+    ref: reg?.ref || '',
     drugs: reg?.drugs?.map(d=>({...d})) || []
   })
 
@@ -307,6 +309,16 @@ function RegForm({ reg, onSave, onCancel }) {
           <div>
             <label className="label">Cycle Info</label>
             <input value={form.cycleInfo} onChange={e=>sf('cycleInfo',e.target.value)} placeholder="21 วัน" />
+          </div>
+          <div>
+            <label className="label">หมวด (group)</label>
+            <select value={form.group} onChange={e=>sf('group',e.target.value)}>
+              <option value="summary">สูตรย่อ</option><option value="order">ใบสั่งยา hemato</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">อ้างอิง PDF (ref)</label>
+            <input value={form.ref} onChange={e=>sf('ref',e.target.value)} placeholder="Siriraj order 2025 p.43" />
           </div>
         </div>
       </div>

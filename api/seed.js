@@ -1,5 +1,6 @@
 import clientPromise from './_db.js'
 import { SIRIRAJ_2025 } from './_siriraj2025.js'
+import { ORDERS } from './_orders.js'
 
 const BUILTIN = [
   { name:'3+7 (Idarubicin+Cytarabine)', abbr:'3+7', cat:'AML', type:'IPD', drugs:[
@@ -261,7 +262,7 @@ export default async function handler(req, res) {
   await db.collection('drugs').deleteMany({})
 
   let count = 0
-  for (const reg of [...BUILTIN, ...SIRIRAJ_2025]) {
+  for (const reg of [...BUILTIN, ...SIRIRAJ_2025, ...ORDERS]) {
     const { drugs, ...regData } = reg
     regData.is_active = true
     regData.created_at = new Date()

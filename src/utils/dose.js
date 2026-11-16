@@ -22,7 +22,7 @@ export function calcDose(drug, bsa, wt, ccr) {
     if (drug.maxDose) d = Math.min(d, drug.maxDose)
     return Math.round(d * 10) / 10
   }
-  if (drug.unit === 'mg/kg' || drug.unit === 'mg/kg/day') return Math.round(drug.dose * w * 10) / 10
+  if (['mg/kg', 'mg/kg/day', 'mcg/kg', 'mcg/kg/day'].includes(drug.unit)) return Math.round(drug.dose * w * 10) / 10
   if (drug.unit === 'AUC5') return ccr ? Math.min(5 * (parseFloat(ccr) + 25), 800) : null
   return null
 }
@@ -39,7 +39,7 @@ export function makeDrugRow(drug, bsa, wt, ccr, index) {
     name: drug.name || '',
     doseLabel,
     dose: dv != null ? String(dv) : '',
-    doseUnit: drug.unit === 'mcg/m2' ? 'mcg' : 'mg',
+    doseUnit: String(drug.unit || '').startsWith('mcg') ? 'mcg' : 'mg',
     vehicle: drug.vehicle || '',
     rate: isFixed ? '' : (drug.route || ''),
     instruct: isFixed ? (drug.instruct || '') : '',
