@@ -69,9 +69,13 @@ export function planFills({ fields, rows, pt, ord, bsa, ccr }) {
     cr: fmt(pt.cr), tb: fmt(pt.tb), ast: fmt(pt.ast), alt: fmt(pt.alt),
     d1: ord.day1 || '', cycle: ord.cycle || '', dr: ord.drName || '', drcode: ord.drCode || '',
   }
+  const wt = parseFloat(pt.wt) || 0
   for (const f of fields) {
     if (f.k in simple) {
       if (simple[f.k]) out.push({ x: f.x, y: f.y, w: f.w, h: f.h, text: simple[f.k] })
+    } else if (f.k === 'perkg' && wt && f.factor) {
+      // infusion rate blank printed as "…… ml/hr (x ml/kg/hr)" → x × body weight
+      out.push({ x: f.x, y: f.y, w: f.w, h: f.h, text: fmt(Math.round(f.factor * wt * 10) / 10) })
     }
   }
 
