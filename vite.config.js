@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:3000'
+      // local `vercel dev` by default; set API_PROXY=https://chemo-hemato.vercel.app to read live data
+      '/api': { target: process.env.API_PROXY || 'http://localhost:3000', changeOrigin: true }
     }
   }
 })

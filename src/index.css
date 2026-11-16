@@ -283,3 +283,21 @@ button:disabled { opacity: .5; cursor: default; }
   background:#e3f2fd; color:#1565c0; font-size:12px; font-weight:500; text-decoration:none; white-space:nowrap;
 }
 .pdf-link:hover { background:#bbdefb; }
+
+/* พิมพ์ฟอร์มต้นฉบับ (PDF) */
+.pdf-modal { position:fixed; inset:0; z-index:1000; background:#263238; display:flex; flex-direction:column; }
+.pdf-modal-bar { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#1565c0; color:#fff; }
+.pdf-modal-tools { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:8px 14px; background:#fff; border-bottom:1px solid #cfd8dc; }
+.pdf-modal-tools .btn-primary { margin-left:auto; }
+.pdf-modal-body { flex:1; overflow:auto; padding:12px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+.pdf-page-img { width:100%; max-width:860px; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.4); }
+.pdf-print-root { display:none; }
+@media print {
+  body.print-pdf .print-only { display:none !important; }
+  body.print-pdf .pdf-modal { display:block !important; position:static; background:#fff; }
+  body.print-pdf .pdf-modal-bar, body.print-pdf .pdf-modal-tools, body.print-pdf .pdf-modal-body { display:none !important; }
+  body.print-pdf .pdf-print-root { display:block !important; }
+  .pdf-print-page { display:block; width:100%; height:auto; page-break-after:always; break-after:page; }
+  .pdf-print-page:last-child { page-break-after:auto; break-after:auto; }
+}
+.pdf-modal-tools input[type=checkbox] { appearance:auto; -webkit-appearance:checkbox; width:16px; height:16px; padding:0; margin:0; border-radius:3px; }

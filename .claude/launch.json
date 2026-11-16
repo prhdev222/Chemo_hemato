@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chemo-dev",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["API_PROXY=https://chemo-hemato.vercel.app", "npm", "run", "dev", "--", "--port", "5173", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}
