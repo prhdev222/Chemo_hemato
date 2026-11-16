@@ -46,8 +46,8 @@ export default function AdminPage() {
       }
       setEditReg(null)
       load()
-    } catch {
-      showToast('❌ บันทึกไม่ได้ ตรวจสอบ admin key', '#c62828')
+    } catch (err) {
+      showToast('❌ ' + (err?.message || 'บันทึกไม่ได้'), '#c62828')
     }
   }
 
@@ -59,7 +59,7 @@ export default function AdminPage() {
           await deleteRegimen(reg._id, adminKey)
           showToast('✅ ลบแล้ว')
           load()
-        } catch { showToast('❌ ลบไม่ได้', '#c62828') }
+        } catch (err) { showToast('❌ ' + (err?.message || 'ลบไม่ได้'), '#c62828') }
         setConfirm(null)
       }
     })
@@ -73,7 +73,7 @@ export default function AdminPage() {
           const r = await seedRegimens(adminKey)
           showToast(`✅ Seed แล้ว ${r.seeded} สูตร`)
           load()
-        } catch { showToast('❌ Seed ไม่ได้', '#c62828') }
+        } catch (err) { showToast('❌ ' + (err?.message || 'Seed ไม่ได้'), '#c62828') }
         setConfirm(null)
       }
     })

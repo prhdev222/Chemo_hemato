@@ -1,4 +1,5 @@
 import clientPromise from './_db.js'
+import { isAdmin } from './_auth.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
 
   // POST — สร้าง regimen ใหม่ (admin only)
   if (req.method === 'POST') {
-    if (req.headers['x-admin-key'] !== process.env.ADMIN_PASSWORD)
+    if (!isAdmin(req))
       return res.status(401).json({ error: 'Unauthorized' })
 
     const { drugs, ...regimenData } = req.body

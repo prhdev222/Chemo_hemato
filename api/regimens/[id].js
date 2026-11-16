@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
-import clientPromise from './_db.js'
+import clientPromise from '../_db.js'
+import { isAdmin } from '../_auth.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -8,8 +9,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
 
-  const isAdmin = req.headers['x-admin-key'] === process.env.ADMIN_PASSWORD
-  if (!isAdmin) return res.status(401).json({ error: 'Unauthorized' })
+  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
   const client = await clientPromise
   const db = client.db('chemo_order')
