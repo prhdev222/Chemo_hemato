@@ -60,7 +60,7 @@ function fmt(n) {
  * @param {object} args.ord     order (cycle, day1, drName, drCode)
  * @param {number|string} args.bsa
  * @param {string} args.ccr
- * @returns {Array<{x,y,w,h,text}>}
+ * @returns {Array<{idx,x,y,w,h,text}>}  idx = index into `fields`
  */
 export function planFills({ fields, rows, pt, ord, bsa, ccr }) {
   const out = []
@@ -70,17 +70,17 @@ export function planFills({ fields, rows, pt, ord, bsa, ccr }) {
     d1: ord.day1 || '', cycle: ord.cycle || '', dr: ord.drName || '', drcode: ord.drCode || '',
   }
   const wt = parseFloat(pt.wt) || 0
-  for (const f of fields) {
+  fields.forEach((f, idx) => {
     if (f.k in simple) {
-      if (simple[f.k]) out.push({ x: f.x, y: f.y, w: f.w, h: f.h, text: simple[f.k] })
+      if (simple[f.k]) out.push({ idx, x: f.x, y: f.y, w: f.w, h: f.h, text: simple[f.k] })
     } else if (f.k === 'perkg' && wt && f.factor) {
       // infusion rate blank printed as "…… ml/hr (x ml/kg/hr)" → x × body weight
-      out.push({ x: f.x, y: f.y, w: f.w, h: f.h, text: fmt(Math.round(f.factor * wt * 10) / 10) })
+      out.push({ idx, x: f.x, y: f.y, w: f.w, h: f.h, text: fmt(Math.round(f.factor * wt * 10) / 10) })
     }
-  }
+  })
 
   // dose blanks: match each calculable, checked row to the first unused blank whose context names the drug
-  const doseFields = fields.filter(f => f.k === 'dose').map(f => ({ ...f, used: false, tok: drugToken(f.ctx) , ctxl: (f.ctx || '').toLowerCase() }))
+  const doseFields = fields.map((f, idx) => ({ ...f, idx })).filter(f => f.k === 'dose').map(f => ({ ...f, used: false, tok: drugToken(f.ctx), ctxl: (f.ctx || '').toLowerCase() }))
   for (const row of rows) {
     if (!row.checked || row.isFixed || !row.dose) continue
     const tok = drugToken(row.name)
@@ -98,7 +98,7 @@ export function planFills({ fields, rows, pt, ord, bsa, ccr }) {
     } else if (f.u === 'mg' || f.u === 'mcg' || f.u === 'iu' || f.u === 'unit' || f.u === 'other') {
       text = fmt(dose)
     }
-    if (text) out.push({ x: f.x, y: f.y, w: f.w, h: f.h, text })
+    if (text) out.push({ idx: f.idx, x: f.x, y: f.y, w: f.w, h: f.h, text })
   }
   return out
 }
