@@ -301,3 +301,14 @@ button:disabled { opacity: .5; cursor: default; }
   .pdf-print-page:last-child { page-break-after:auto; break-after:auto; }
 }
 .pdf-modal-tools input[type=checkbox] { appearance:auto; -webkit-appearance:checkbox; width:16px; height:16px; padding:0; margin:0; border-radius:3px; }
+/* editable blanks laid over the page image */
+.pdf-page-wrap { position:relative; width:100%; max-width:860px; line-height:0; }
+.pdf-page-wrap .pdf-page-img { display:block; width:100%; max-width:none; }
+.pdf-field {
+  position:absolute; box-sizing:border-box; margin:0; padding:0 1px; line-height:1;
+  border:1px dashed rgba(21,101,192,.45); border-radius:2px; background:rgba(255,255,255,.55); letter-spacing:-0.2px;
+  color:#0d2a8c; font-weight:600; font-family:Sarabun,'TH Sarabun New',Arial,sans-serif;
+  min-height:0; height:auto;
+}
+.pdf-field.filled { background:rgba(255,255,255,.92); border-style:solid; }
+.pdf-field:focus { outline:none; border:1.5px solid #1565c0; background:#fff; box-shadow:0 0 0 2px rgba(21,101,192,.25); z-index:1; }
